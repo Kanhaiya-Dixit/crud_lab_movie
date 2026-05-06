@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Catalog System</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; background-color: #f4f4f4; }
+        h1 { text-align: center; color: #333; }
+        form { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input, select { display: block; width: 100%; margin: 10px 0; padding: 10px; box-sizing: border-box; }
+        button { background: #28a745; color: white; border: none; padding: 10px 15px; cursor: pointer; width: 100%; font-size: 16px; }
+        button.delete-btn { background: #dc3545; width: auto; margin-left: 10px; }
+        .movie-card { background: white; padding: 15px; margin: 10px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+
+    <h1>Movie Catalog Management</h1>
+
+    <!-- Form to Add Movie -->
+    <form id="movieForm">
+        <input type="text" id="title" placeholder="Movie Title" required>
+        <input type="text" id="director" placeholder="Director Name" required>
+        <input type="text" id="genre" placeholder="Genre (Action, Sci-Fi, etc.)">
+        <input type="number" id="releaseYear" placeholder="Release Year">
+        <input type="number" id="rating" placeholder="Rating (0-10)" min="0" max="10">
+        <input type="number" id="duration" placeholder="Duration (mins)">
+        <button type="submit">Add Movie</button>
+    </form>
+
+    <!-- List to Display Movies -->
+    <div id="movieList"></div>
+
+    <script>
+        const movieForm = document.getElementById('movieForm');
+        const movieList = document.getElementById('movieList');
+
+        // Function to fetch and display movies (GET)
+        async function fetchMovies() {
+            const res = await fetch('/api/movies');
+            const movies = await res.json();
+            movieList.innerHTML = '';
+            movies.forEach(movie => {
+                const div = document.createElement('div');
+                div.className = 'movie-card';
+                div.innerHTML = `
+                    <div>
+                        <strong>${movie.title}</strong> (${movie.releaseYear}) <br>
+                        <small>${movie.director} | ${movie.genre} | Rating: ${movie.rating}/10</small>
+                    </div>
+                    <button class="delete-btn" onclick="deleteMovie('${movie._id}')">Delete</button>
+                `;
+                movieList.appendChild(div);
+            });
+        }
+
+        // Function to add a movie (POST)
+        movieForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const movieData = {
+                title: document.getElementById('title').value,
+                director: document.getElementById('director').value,
+                genre: document.getElementById('genre').value,
+                releaseYear: document.getElementById('releaseYear').value,
+                rating: document.getElementById('rating').value,
+                duration: document.getElementById('duration').value
+            };
+
+            await fetch('/api/movies', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(movieData)
+            });
+
+            movieForm.reset();
+            fetchMovies(); // Refresh list[cite: 1]
+        });
+
+        // Function to delete a movie (DELETE)[cite: 1]
+        async function deleteMovie(id) {
+            if (confirm('Are you sure?')) {
+                await fetch(`/api/movies/${id}`, { method: 'DELETE' });
+                fetchMovies(); // Refresh list[cite: 1]
+            }
+        }
+
+        // Initial load
+        fetchMovies();
+    </script>
+</body>
+</html>
